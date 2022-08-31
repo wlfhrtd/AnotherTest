@@ -22,7 +22,7 @@ namespace MVC
             services.AddControllersWithViews();
 
             string connectionString = Configuration.GetConnectionString("DefaultConnection");
-            services.AddDbContextPool<ApplicationDbContext>(
+            services.AddDbContext<ApplicationDbContext>(
                 options => options.UseNpgsql(connectionString,
                     sqlOptions => sqlOptions.EnableRetryOnFailure().CommandTimeout(60)));
 
