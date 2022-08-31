@@ -3,9 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace Domain.Models
 {
@@ -35,8 +33,8 @@ namespace Domain.Models
         [NotMapped]
         public virtual DepartmentStatus Status { get; set; }
         // ManyToMany inside single table using DepartmentMapping
-        public virtual ICollection<Department> Departments { get; set; }
-        public virtual ICollection<Department> Subdepartments { get; set; }
+        public virtual ICollection<Department>? Departments { get; set; }
+        public virtual ICollection<Department>? Subdepartments { get; set; }
     }
 
     public enum DepartmentStatus

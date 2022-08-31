@@ -22,7 +22,7 @@ namespace MVC
             services.AddControllersWithViews();
 
             string connectionString = Configuration.GetConnectionString("DefaultConnection");
-            services.AddDbContext<ApplicationDbContext>(
+            services.AddDbContextPool<ApplicationDbContext>(
                 options => options.UseNpgsql(connectionString,
                     sqlOptions => sqlOptions.EnableRetryOnFailure().CommandTimeout(60)));
 
@@ -54,7 +54,7 @@ namespace MVC
             {
                 endpoints.MapControllerRoute(
                     name: "default",
-                    pattern: "{controller=Home}/{action=Index}/{id?}");
+                    pattern: "{controller=Departments}/{action=Index}/{id?}");
             });
         }
     }

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using DAL.EfStructures;
 using Domain.Models;
+using DAL.Repositories.Interfaces;
 
 namespace MVC.Controllers
 {
@@ -56,12 +57,13 @@ namespace MVC.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Name,Id")] Department department)
+        public async Task<IActionResult> Create([Bind("Name")] Department department)
         {
             if (ModelState.IsValid)
             {
                 _context.Add(department);
                 await _context.SaveChangesAsync();
+
                 return RedirectToAction(nameof(Index));
             }
             return View(department);
