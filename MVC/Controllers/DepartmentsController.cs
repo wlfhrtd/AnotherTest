@@ -8,6 +8,9 @@ using Microsoft.EntityFrameworkCore;
 using DAL.EfStructures;
 using Domain.Models;
 using DAL.Repositories.Interfaces;
+using MVC.ViewModels;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Http;
 
 namespace MVC.Controllers
 {
@@ -77,12 +80,22 @@ namespace MVC.Controllers
                 return NotFound();
             }
 
-            var department = await _context.Departments.FindAsync(id);
+            var department = await _context.Departments
+                .Where(d => d.Id == id)
+                .Include("Subdepartments")
+                .SingleOrDefaultAsync();
+
             if (department == null)
             {
                 return NotFound();
             }
-            return View(department);
+
+            List<string> allDepartments = await (from d in _context.Departments
+                                                 select d.Name).ToListAsync();
+
+            DepartmentViewModel viewModel = new(department, ref allDepartments);
+
+            return View(viewModel);
         }
 
         // POST: Departments/Edit/5
@@ -90,23 +103,44 @@ namespace MVC.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Name,Id")] Department department)
+        public async Task<IActionResult> Edit(int id, [FromForm] DepartmentViewModel viewModel)
         {
-            if (id != department.Id)
+            if (id != viewModel.Department.Id)
             {
                 return NotFound();
             }
+
+            //if (!ModelState.IsValid)
+            //{
+            //    List<ModelError> errors = ModelState.Values.SelectMany(v => v.Errors).ToList();
+            //    foreach (var error in errors)
+            //    {
+            //        Console.WriteLine(error.ErrorMessage);
+            //    }
+            //}
 
             if (ModelState.IsValid)
             {
                 try
                 {
+                    var department = await _context.Departments
+                        .Include("Subdepartments")
+                        .SingleAsync(m => m.Id == id);
+
+                    department.Name = viewModel.Department.Name;
+
+                    var subdepartments = _context.Departments
+                        .Where(d => viewModel.ConnectedSubdepartmentsNames
+                        .Any(inc => inc == d.Name));
+
+                    department.Subdepartments = subdepartments.ToList();
+                    
                     _context.Update(department);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!DepartmentExists(department.Id))
+                    if (!DepartmentExists(viewModel.Department.Id))
                     {
                         return NotFound();
                     }
@@ -117,7 +151,7 @@ namespace MVC.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            return View(department);
+            return View(viewModel);
         }
 
         // GET: Departments/Delete/5
