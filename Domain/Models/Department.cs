@@ -26,9 +26,9 @@ namespace Domain.Models
         }
 
 
-        [Required]
-        [StringLength(50)]
-        public virtual string Name { get; set; }
+        //[Required]
+        //[StringLength(50)]
+        //public virtual string Name { get; set; }
 
         [NotMapped]
         public virtual DepartmentStatus Status { get; set; }

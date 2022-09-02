@@ -11,7 +11,7 @@ namespace Dal.EfStructures
         public ApplicationDbContext CreateDbContext(string[] args)
         {
             DbContextOptionsBuilder<ApplicationDbContext> optionsBuilder = new();
-            string connectionString = @"Server=127.0.0.1;Port=5432;Database=SafibTest;User Id=postgres;Password=P@ssw0rd";
+            string connectionString = @"Server=127.0.0.1;Port=5432;Database=SafibTest;User Id=postgres;Password=P@ssw0rd;Include Error Detail=true";
             optionsBuilder.UseNpgsql(connectionString);
             Console.WriteLine($"Connecting to: {connectionString}");
 

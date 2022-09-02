@@ -28,7 +28,7 @@
                 @Html.CreateUnorderedList("sortable2", "connectedSortable", Model.DisconnectedSubdepartmentsNames.ToList(),
                                           "ui-state-highlight", "DisconnectedSubdepartmentsNames", "DisconnectedDepartment")
             </div>
-            <input type="hidden" asp-for="Department.Id" />
+            <input type="hidden" asp-for="Department.Name" />
             <div class="form-group">
                 <input type="submit" value="Save" class="btn btn-primary" />
             </div>

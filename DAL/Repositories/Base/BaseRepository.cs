@@ -51,10 +51,11 @@ namespace DAL.Repositories.Base
 
         public virtual T? FindOneById(int? id) => Table.Find(id);
 
-        public virtual T? FindOneByIdAsNoTracking(int id)
-            => Table.AsNoTrackingWithIdentityResolution().FirstOrDefault(x => x.Id == id);
+        public virtual T? FindOneByNameAsNoTracking(string name)
+            => Table.AsNoTrackingWithIdentityResolution().FirstOrDefault(x => x.Name == name);
 
-        public T? FindOneByIdIgnoreQueryFilters(int id) => Table.IgnoreQueryFilters().FirstOrDefault(x => x.Id == id);
+        public T? FindOneByNameIgnoreQueryFilters(string name)
+            => Table.IgnoreQueryFilters().FirstOrDefault(x => x.Name == name);
 
         public virtual int Update(T entity, bool persist = true)
         {

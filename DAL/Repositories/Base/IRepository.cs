@@ -15,8 +15,8 @@ namespace DAL.Repositories.Base
         int Remove(T entity, bool persist = true);
         int RemoveRange(IEnumerable<T> entities, bool persist = true);
         T? FindOneById(int? id);
-        T? FindOneByIdAsNoTracking(int id);
-        T? FindOneByIdIgnoreQueryFilters(int id);
+        T? FindOneByNameAsNoTracking(string name);
+        T? FindOneByNameIgnoreQueryFilters(string name);
         IEnumerable<T> FindAll();
         IEnumerable<T> FindAllIgnoreQueryFilters();
         void ExecuteQuery(string sql, object[] sqlParametersObjects);

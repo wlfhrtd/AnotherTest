@@ -39,8 +39,8 @@ namespace DAL.EfStructures
                 .HasMany(e => e.Departments)
                 .WithMany(e => e.Subdepartments)
                 .UsingEntity<DepartmentMap>(
-                e => e.HasOne<Department>().WithMany().HasForeignKey(e => e.DepartmentId),
-                e => e.HasOne<Department>().WithMany().HasForeignKey(e => e.SubdepartmentId));
+                e => e.HasOne<Department>().WithMany().HasForeignKey(e => e.DepartmentName),
+                e => e.HasOne<Department>().WithMany().HasForeignKey(e => e.SubdepartmentName));
 
             OnModelCreatingPartial(modelBuilder);
         }

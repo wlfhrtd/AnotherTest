@@ -10,6 +10,6 @@ namespace DAL.Repositories.Interfaces
 {
     public interface IDepartmentRepository : IRepository<Department>
     {
-        Department FindOneByName(string name);
+        Department? FindOneByName(string? name);
     }
 }

@@ -22,18 +22,12 @@ namespace DAL.Repositories
             => Table
             .Include(d => d.Subdepartments);
 
-        public IEnumerable<Department> FindAllBy(int departmentId)
+        public IEnumerable<Department> FindAllBy(string subdepartmentName)
             => Table
-            .Where(d => d.Id == departmentId)
+            .Where(d => d.Subdepartments.Any(sub => d.Name == subdepartmentName))
             .Include(d => d.Subdepartments);
 
-        public override Department? FindOneById(int? id)
-            => Table
-            .Where(d => d.Id == id)
-            .Include(d => d.Subdepartments)
-            .FirstOrDefault();
-
-        public Department? FindOneByName(string name)
+        public Department? FindOneByName(string? name)
             => Table
             .Where(d => d.Name == name)
             .Include(d => d.Subdepartments)

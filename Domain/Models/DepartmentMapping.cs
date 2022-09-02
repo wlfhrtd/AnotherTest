@@ -8,7 +8,10 @@ namespace Domain.Models
 {
     public class DepartmentMap
     {
-        public int DepartmentId { get; set; }
-        public int SubdepartmentId { get; set; }
+        //public int DepartmentId { get; set; }
+        //public int SubdepartmentId { get; set; }
+
+        public string DepartmentName { get; set; }
+        public string SubdepartmentName { get; set; }
     }
 }

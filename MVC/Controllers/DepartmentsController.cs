@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace MVC.Controllers
 {
+    [Route("[controller]/[action]")]
     public class DepartmentsController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -23,7 +24,8 @@ namespace MVC.Controllers
             _context = context;
         }
 
-        // GET: Departments
+        [Route("/[controller]")]
+        [Route("/[controller]/[action]")]
         public async Task<IActionResult> Index()
         {
               return _context.Departments != null ? 
@@ -31,16 +33,16 @@ namespace MVC.Controllers
                           Problem("Entity set 'ApplicationDbContext.Departments'  is null.");
         }
 
-        // GET: Departments/Details/5
-        public async Task<IActionResult> Details(int? id)
+        [HttpGet("{name?}")]
+        public async Task<IActionResult> Details(string name)
         {
-            if (id == null || _context.Departments == null)
+            if (name == null || _context.Departments == null)
             {
                 return NotFound();
             }
 
             var department = await _context.Departments
-                .FirstOrDefaultAsync(m => m.Id == id);
+                .FirstOrDefaultAsync(m => m.Name == name);
             if (department == null)
             {
                 return NotFound();
@@ -49,7 +51,7 @@ namespace MVC.Controllers
             return View(department);
         }
 
-        // GET: Departments/Create
+        [HttpGet]
         public IActionResult Create()
         {
             return View();
@@ -72,16 +74,16 @@ namespace MVC.Controllers
             return View(department);
         }
 
-        // GET: Departments/Edit/5
-        public async Task<IActionResult> Edit(int? id)
+        [HttpGet("{name?}")]
+        public async Task<IActionResult> Edit(string? name)
         {
-            if (id == null || _context.Departments == null)
+            if (name == null || _context.Departments == null)
             {
                 return NotFound();
             }
 
             var department = await _context.Departments
-                .Where(d => d.Id == id)
+                .Where(d => d.Name == name)
                 .Include("Subdepartments")
                 .SingleOrDefaultAsync();
 
@@ -98,14 +100,11 @@ namespace MVC.Controllers
             return View(viewModel);
         }
 
-        // POST: Departments/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
+        [HttpPost("{name}")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [FromForm] DepartmentViewModel viewModel)
+        public async Task<IActionResult> Edit(string name, [FromForm] DepartmentViewModel viewModel)
         {
-            if (id != viewModel.Department.Id)
+            if (name != viewModel.Department.Name)
             {
                 return NotFound();
             }
@@ -125,7 +124,7 @@ namespace MVC.Controllers
                 {
                     var department = await _context.Departments
                         .Include("Subdepartments")
-                        .SingleAsync(m => m.Id == id);
+                        .SingleAsync(m => m.Name == name);
 
                     department.Name = viewModel.Department.Name;
 
@@ -140,7 +139,7 @@ namespace MVC.Controllers
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!DepartmentExists(viewModel.Department.Id))
+                    if (!DepartmentExists(viewModel.Department.Name))
                     {
                         return NotFound();
                     }
@@ -154,16 +153,16 @@ namespace MVC.Controllers
             return View(viewModel);
         }
 
-        // GET: Departments/Delete/5
-        public async Task<IActionResult> Delete(int? id)
+        [HttpGet("{name?}")]
+        public async Task<IActionResult> Delete(string? name)
         {
-            if (id == null || _context.Departments == null)
+            if (name == null || _context.Departments == null)
             {
                 return NotFound();
             }
 
             var department = await _context.Departments
-                .FirstOrDefaultAsync(m => m.Id == id);
+                .FirstOrDefaultAsync(m => m.Name == name);
             if (department == null)
             {
                 return NotFound();
@@ -172,16 +171,15 @@ namespace MVC.Controllers
             return View(department);
         }
 
-        // POST: Departments/Delete/5
-        [HttpPost, ActionName("Delete")]
+        [HttpPost("{name}")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        public async Task<IActionResult> DeleteConfirmed(string name)
         {
             if (_context.Departments == null)
             {
                 return Problem("Entity set 'ApplicationDbContext.Departments'  is null.");
             }
-            var department = await _context.Departments.FindAsync(id);
+            var department = await _context.Departments.FindAsync(name);
             if (department != null)
             {
                 _context.Departments.Remove(department);
@@ -191,9 +189,9 @@ namespace MVC.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        private bool DepartmentExists(int id)
+        private bool DepartmentExists(string name)
         {
-          return (_context.Departments?.Any(e => e.Id == id)).GetValueOrDefault();
+          return (_context.Departments?.Any(e => e.Name == name)).GetValueOrDefault();
         }
     }
 }
