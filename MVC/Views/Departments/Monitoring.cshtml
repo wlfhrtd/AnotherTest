@@ -1,0 +1,77 @@
+﻿@using System.Text
+@using Newtonsoft.Json
+@model IList<Domain.Models.Department>
+
+@{
+    ViewData["Title"] = "Monitoring";
+
+    StringBuilder sb = new(512);
+    sb.Append("[");
+    for (int i = 0; i < Model.Count; i++)
+    {
+        sb.Append($"\"{Model[i].Name}\",");
+    }
+    sb.Append("]");
+    
+    ViewBag.Departments = sb.ToString();
+}
+
+<h1>Monitoring</h1>
+
+<textarea id="text" rows="20" cols="100">
+    MVC should send ping to API
+</textarea>
+<button id="btnConnect" class="btn btn-primary">Connect</button>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                Name
+            </th>
+            <th></th>
+        </tr>
+    </thead>   
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Name)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Status)
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<script>
+    let connectButton = document.getElementById("btnConnect");
+    let textarea = document.getElementById("text");
+    //let json = @Html.Raw(Json.Serialize(@Model));
+    let json = @Html.Raw(Json.Serialize(@Html.ViewBag.Departments));
+    //let json = JSON.stringify(@Html.ViewBag.Departments);
+    //let json = @Html.ViewBag.Departments;
+
+    connectButton.onclick = function () {
+        socket = new WebSocket("wss://localhost:7110/ws");
+        socket.onopen = function (event) {
+            //console.log(json);
+            socket.send(json);
+        };
+        socket.onclose = function (event) {
+            console.log("closed");
+        };
+        socket.onerror = function (event) {
+            console.log(event.data);
+        };
+        socket.onmessage = function (event) {
+            textarea.value = event.data;
+        };
+        setInterval(() => {
+            socket.send('');
+        }, 3000);
+    };
+
+</script>

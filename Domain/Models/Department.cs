@@ -39,7 +39,7 @@ namespace Domain.Models
 
     public enum DepartmentStatus
     {
-        Active,
         Blocked,
+        Active,      
     }
 }

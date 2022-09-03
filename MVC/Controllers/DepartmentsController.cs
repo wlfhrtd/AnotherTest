@@ -189,6 +189,14 @@ namespace MVC.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        [HttpGet]
+        public async Task<IActionResult> Monitoring()
+        {
+            return _context.Departments != null ?
+                          View(await _context.Departments.ToListAsync()) :
+                          Problem("Entity set 'ApplicationDbContext.Departments'  is null.");
+        }
+
         private bool DepartmentExists(string name)
         {
           return (_context.Departments?.Any(e => e.Name == name)).GetValueOrDefault();
