@@ -30,8 +30,11 @@ namespace Domain.Models
         //[StringLength(50)]
         //public virtual string Name { get; set; }
 
+
+        // not used anywhere but just in case
         [NotMapped]
         public virtual DepartmentStatus Status { get; set; }
+
         // ManyToMany inside single table using DepartmentMapping
         public virtual ICollection<Department>? Departments { get; set; }
         public virtual ICollection<Department>? Subdepartments { get; set; }

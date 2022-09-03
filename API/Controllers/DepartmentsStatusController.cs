@@ -34,32 +34,20 @@ namespace API.Controllers
             WebSocketReceiveResult result =
                 await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
 
-            var bytesAsString = Encoding.UTF8.GetString(buffer);
-            Console.WriteLine(bytesAsString);
-            string[] departmentNames = JsonConvert.DeserializeObject<string[]>(bytesAsString);
-            foreach (var departmentName in departmentNames)
-            {
-                Console.WriteLine(departmentName);
-            }
-            
+            string bytesAsString = Encoding.UTF8.GetString(buffer);
+
+            Dictionary<string, int> departmentsResponse =
+                JsonConvert.DeserializeObject<Dictionary<string, int>>(bytesAsString);
+
             while (!result.CloseStatus.HasValue)
             {
-                //await webSocket.SendAsync(new ArraySegment<byte>(buffer, 0, result.Count),
-                //                          result.MessageType, result.EndOfMessage, CancellationToken.None);
-
-                var status = new[] { "Active", "Blocked" };
-
-                var randomStatus = Enumerable.Range(1, departmentNames.Length)
-                    .Select(index => status[Random.Shared.Next(status.Length)]).ToArray();
-
-                Dictionary<string, string> response = new();
-
-                for (int i = 0; i < departmentNames.Length; i++)
+                foreach (string key in departmentsResponse.Keys.ToArray())
                 {
-                    response.Add(departmentNames[i], randomStatus[i]);
+                    // inverse status ~ XOR; check Departments.Status
+                    departmentsResponse[key] = 1 - departmentsResponse[key];
                 }
 
-                var json = System.Text.Json.JsonSerializer.Serialize(response);
+                var json = System.Text.Json.JsonSerializer.Serialize(departmentsResponse);
                 var jsonResponse = Encoding.UTF8.GetBytes(json);
 
                 await webSocket.SendAsync(new ArraySegment<byte>(jsonResponse, 0, jsonResponse.Length),
@@ -72,24 +60,25 @@ namespace API.Controllers
                 result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
         }
 
-        public static void AcceptWebSocketAsyncBackgroundSocketProcessor(WebApplication app)
-        {
-            // <snippet_AcceptWebSocketAsyncBackgroundSocketProcessor>
-            app.Run(async (context) =>
-            {
-                using var webSocket = await context.WebSockets.AcceptWebSocketAsync();
-                var socketFinishedTcs = new TaskCompletionSource<object>();
+        //public static void AcceptWebSocketAsyncBackgroundSocketProcessor(WebApplication app)
+        //{
+        //    app.Run(async (context) =>
+        //    {
+        //        using var webSocket = await context.WebSockets.AcceptWebSocketAsync();
+        //        var socketFinishedTcs = new TaskCompletionSource<object>();
 
-                BackgroundSocketProcessor.AddSocket(webSocket, socketFinishedTcs);
+        //        BackgroundSocketProcessor.AddSocket(webSocket, socketFinishedTcs);
 
-                await socketFinishedTcs.Task;
-            });
-            // </snippet_AcceptWebSocketAsyncBackgroundSocketProcessor>
-        }
+        //        await socketFinishedTcs.Task;
+        //    });
+        //}
 
-        internal class BackgroundSocketProcessor
-        {
-            internal static void AddSocket(WebSocket webSocket, TaskCompletionSource<object> socketFinishedTcs) { }
-        }
+        //internal class BackgroundSocketProcessor
+        //{
+        //    internal static void AddSocket(WebSocket webSocket, TaskCompletionSource<object> socketFinishedTcs)
+        //    {
+
+        //    }
+        //}
     }
 }
