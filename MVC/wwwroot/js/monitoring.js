@@ -3,11 +3,22 @@ function getRandomInt(maxExclusive) {
     return Math.floor(Math.random() * maxExclusive); // [0; maxExclusive)
 }
 
+// name filter
+let $searchNameInput = document.getElementById("searchNameInput");
+let $departmentsListItems = document.querySelectorAll(".departments > li");
+let listFilter = () => {
+    let inputVal = $searchNameInput.value.trim().toLowerCase();
+
+    $departmentsListItems.forEach(li => {
+        let text = li.textContent.trim().toLowerCase();
+        li.classList.toggle("li-none", !text.includes(inputVal));
+    });
+}
+$searchNameInput.addEventListener("input", listFilter);
+
 // general init
 const DepartmentStatus = { 0: 'Blocked', 1: 'Active' };
 const DepartmentStatusReversed = { 'Blocked': 0, 'Active': 1 };
-
-let $searchNameInput = document.getElementById("searchNameInput");
 
 let $departments = document.getElementsByClassName("DepartmentName");
 let count = $departments.length;

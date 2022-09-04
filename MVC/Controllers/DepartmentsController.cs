@@ -24,13 +24,22 @@ namespace MVC.Controllers
             _context = context;
         }
 
-        [Route("/[controller]")]
-        [Route("/[controller]/[action]")]
-        public async Task<IActionResult> Index()
+        [Route("/[controller]/{searchString?}")]
+        [Route("/[controller]/[action]/{searchString?}")]
+        public async Task<IActionResult> Index(string? searchString)
         {
-              return _context.Departments != null ? 
-                          View(await _context.Departments.ToListAsync()) :
-                          Problem("Entity set 'ApplicationDbContext.Departments'  is null.");
+            ViewData["CurrentFilter"] = searchString;
+
+            var departments = from d in _context.Departments
+                              select d;
+
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                departments = departments
+                    .Where(d => d.Name.Contains(searchString)); // IQueryable database implementation ~ case-sensitive as default
+            }
+
+            return View(await departments.AsNoTracking().ToListAsync());
         }
 
         [HttpGet("{name?}")]

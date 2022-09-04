@@ -25,18 +25,13 @@ namespace Domain.Models
             Status = status;
         }
 
-
-        //[Required]
-        //[StringLength(50)]
-        //public virtual string Name { get; set; }
-
-
-        // not used anywhere but just in case
         [NotMapped]
         public virtual DepartmentStatus Status { get; set; }
 
-        // ManyToMany inside single table using DepartmentMapping
-        public virtual ICollection<Department>? Departments { get; set; }
+        // ManyToOne within single table
+        [ForeignKey("DepartmentMain")]
+        public string? DepartmentMainName { get; set; }
+        public virtual Department? DepartmentMain { get; set; }
         public virtual ICollection<Department>? Subdepartments { get; set; }
     }
 

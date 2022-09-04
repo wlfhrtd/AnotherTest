@@ -35,13 +35,6 @@ namespace DAL.EfStructures
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Department>()
-                .HasMany(e => e.Departments)
-                .WithMany(e => e.Subdepartments)
-                .UsingEntity<DepartmentMap>(
-                e => e.HasOne<Department>().WithMany().HasForeignKey(e => e.DepartmentName),
-                e => e.HasOne<Department>().WithMany().HasForeignKey(e => e.SubdepartmentName));
-
             OnModelCreatingPartial(modelBuilder);
         }
 
