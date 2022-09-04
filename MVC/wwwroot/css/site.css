@@ -17,6 +17,10 @@ body {
   margin-bottom: 60px;
 }
 
+.li-none {
+    display: none;
+}
+
 #sortable1, #sortable2 {
     border: 1px solid #eee;
     width: 142px;

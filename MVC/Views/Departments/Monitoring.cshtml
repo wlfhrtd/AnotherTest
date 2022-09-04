@@ -6,30 +6,36 @@
 
 <h1>Monitoring</h1>
 
-<button id="btnConnect" class="btn btn-primary">Connect</button>
+<input type="text" id="searchNameInput" placeholder="Find" autocomplete="off">
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                Name
-            </th>
-            <th></th>
-        </tr>
-    </thead>   
-    <tbody>
-        @foreach (var item in Model)
-        {
-            <tr>
-                <td id="@item.Name" class="DepartmentName">
-                    @Html.DisplayFor(modelItem => item.Name)
-                </td>
-                <td id="@string.Concat(item.Name, "Status")" class="DepartmentStatus">
-                    @Html.DisplayFor(modelItem => item.Status)
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
+<ul>
+    @foreach (var item in Model)
+    {
+        <li>
+            <span id="@item.Name" class="DepartmentName">
+                @Html.DisplayFor(modelItem => item.Name)
+            </span>
+            <span id="@string.Concat(item.Name, "Status")" class="DepartmentStatus">
+                @Html.DisplayFor(modelItem => item.Status)
+            </span>
+            <ul>
+                @if (item.Subdepartments != null)
+                {
+                    foreach (var subItem in item.Subdepartments)
+                    {
+                        <li>
+                            <span id="@subItem.Name" class="DepartmentName">
+                                @Html.DisplayFor(subDep => subItem.Name)
+                            </span>
+                            <span id="@string.Concat(subItem.Name, "Status")" class="DepartmentStatus">
+                                @Html.DisplayFor(subDep => subItem.Status)
+                            </span>
+                        </li>
+                    }
+                }
+            </ul>
+        </li>
+    }
+</ul>
 
 <script type="text/javascript" src="~/js/monitoring.js"></script>

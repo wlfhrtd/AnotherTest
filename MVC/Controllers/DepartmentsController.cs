@@ -193,7 +193,7 @@ namespace MVC.Controllers
         public async Task<IActionResult> Monitoring()
         {
             return _context.Departments != null ?
-                          View(await _context.Departments.ToListAsync()) :
+                          View(await _context.Departments.Include("Subdepartments").ToListAsync()) :
                           Problem("Entity set 'ApplicationDbContext.Departments'  is null.");
         }
 
