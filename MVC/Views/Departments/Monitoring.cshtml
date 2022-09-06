@@ -16,61 +16,7 @@
     {
         if (item.DepartmentMainName == null)
         {
-            <li>
-                @Html.CreateSpanDepartment(item.Name, "DepartmentName", item.Name)
-                @Html.CreateSpanDepartment(item.Name + "Status", "DepartmentStatus", item.Status.ToString())
-                <ul>
-                    @if (item.Subdepartments.Count != 0)
-                    {
-                        foreach (var subItem in item.Subdepartments)
-                        {
-                            <li>
-                                @Html.CreateSpanDepartment(subItem.Name, "DepartmentName", subItem.Name)
-                                @Html.CreateSpanDepartment(subItem.Name + "Status", "DepartmentStatus", subItem.Status.ToString())
-                                <ul>
-                                    @if (subItem.Subdepartments.Count != 0)
-                                    {
-                                        foreach (var i in subItem.Subdepartments)
-                                        {
-                                            <li>
-                                                @Html.CreateSpanDepartment(i.Name, "DepartmentName", i.Name)
-                                                @Html.CreateSpanDepartment(i.Name + "Status", "DepartmentStatus", i.Status.ToString())
-                                                <ul>
-                                                    @if (i.Subdepartments.Count != 0)
-                                                    {
-                                                        foreach (var ii in i.Subdepartments)
-                                                        {
-                                                            <li>
-                                                                @Html.CreateSpanDepartment(ii.Name, "DepartmentName", ii.Name)
-                                                                @Html.CreateSpanDepartment(ii.Name + "Status", "DepartmentStatus", ii.Status.ToString())
-                                                                <ul>
-                                                                    @if (ii.Subdepartments.Count != 0)
-                                                                    {
-                                                                        foreach (var iii in ii.Subdepartments)
-                                                                        {
-                                                                            <li>
-                                                                                @Html.CreateSpanDepartment(iii.Name, "DepartmentName", iii.Name)
-                                                                                @Html.CreateSpanDepartment(iii.Name + "Status", "DepartmentStatus", iii.Status.ToString())
-                                                                                <ul>
-                                                                                </ul>
-                                                                            </li>
-                                                                        }
-                                                                    }
-                                                                </ul>
-                                                            </li>
-                                                        }
-                                                    }
-                                                </ul>
-                                            </li>
-                                        }
-                                    }
-                                </ul>
-                            </li>
-
-                        }
-                    }
-                </ul>
-            </li>
+            @Html.CreateCollectionViewForSingle(item)
         }    
     }
 </ul>

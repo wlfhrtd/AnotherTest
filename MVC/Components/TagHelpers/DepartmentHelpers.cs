@@ -55,43 +55,45 @@ namespace MVC.Components.TagHelpers
             return new HtmlString(writer.ToString());
         }
 
-        #region TRASH
-        //public static HtmlString CreateCollectionViewForSingle(this IHtmlHelper html, Department department)
-        //{
-        //    StringBuilder sb = new(2048);
+        public static HtmlString CreateCollectionViewForSingle(this IHtmlHelper html, Department department)
+        {
+            StringWriter writer = new();
+            Recursion(department).WriteTo(writer, HtmlEncoder.Default);
 
-        //    sb.Append(Recursion(department));
+            return new HtmlString(writer.ToString());
+        }
 
-        //    return new HtmlString(sb.ToString());
-        //}
+        private static TagBuilder Recursion(Department department)
+        {
+            TagBuilder li = new("li");
 
-        //private static string Recursion(Department department)
-        //{
-        //    StringBuilder stringBuilder = new(2048);
+            TagBuilder spanName = new("span");
+            spanName.Attributes.Add("id", department.Name);
+            spanName.Attributes.Add("class", "DepartmentName");
+            spanName.InnerHtml.Append(department.Name);
 
-        //    stringBuilder.AppendLine("<li>");
-        //    stringBuilder.AppendLine($"<span id=\"{department.Name}\" class=\"DepartmentName\">");
-        //    stringBuilder.AppendLine(department.Name);
-        //    stringBuilder.AppendLine("</span>");
-        //    stringBuilder.AppendLine($"<span id=\"{department.Name + "Status"}\" class=\"DepartmentStatus\">");
-        //    stringBuilder.AppendLine(department.Status.ToString());
-        //    stringBuilder.AppendLine("</span>");
-        //    stringBuilder.AppendLine("<ul>");
+            li.InnerHtml.AppendHtml(spanName);
 
-        //    if (department.Subdepartments.Count != 0)
-        //    {
-        //        foreach (var item in department.Subdepartments)
-        //        {
-        //            stringBuilder.AppendLine(Recursion(item));
-        //        }
+            TagBuilder spanStatus = new("span");
+            spanStatus.Attributes.Add("id", department.Name + "Status");
+            spanStatus.Attributes.Add("class", "DepartmentStatus");
+            spanStatus.InnerHtml.Append(department.Status.ToString());
 
-        //    }
+            li.InnerHtml.AppendHtml(spanStatus);
 
-        //    stringBuilder.AppendLine("</ul>");
-        //    stringBuilder.AppendLine("</li>");
+            TagBuilder ul = new("ul");
 
-        //    return stringBuilder.ToString().TrimEnd();
-        //}
-        #endregion
+            if (department.Subdepartments.Count != 0)
+            {
+                foreach (var item in department.Subdepartments)
+                {
+                    ul.InnerHtml.AppendHtml(Recursion(item));
+                }
+            }
+
+            li.InnerHtml.AppendHtml(ul);
+
+            return li;
+        }
     }
 }
