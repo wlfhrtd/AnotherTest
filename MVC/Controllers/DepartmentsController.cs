@@ -18,41 +18,27 @@ namespace MVC.Controllers
     [Route("[controller]/[action]")]
     public class DepartmentsController : Controller
     {
-        private readonly ApplicationDbContext _context;
-
-        public DepartmentsController(ApplicationDbContext context)
-        {
-            _context = context;
-        }
-
         [Route("/[controller]/{searchString?}")]
         [Route("/[controller]/[action]/{searchString?}")]
-        public async Task<IActionResult> Index(string? searchString)
+        public async Task<IActionResult> Index(string? searchString,
+                                              [FromServices] IDepartmentRepository departmentRepository)
         {
             ViewData["CurrentFilter"] = searchString;
 
-            var departments = from d in _context.Departments
-                              select d;
-
-            if (!string.IsNullOrEmpty(searchString))
-            {
-                departments = departments
-                    .Where(d => d.Name.Contains(searchString)); // IQueryable database implementation ~ case-sensitive as default
-            }
-
-            return View(await departments.AsNoTracking().ToListAsync());
+            return View(await departmentRepository.FindAllAsNoTrackingAsync(searchString));
         }
 
         [HttpGet("{name?}")]
-        public async Task<IActionResult> Details(string name)
+        public async Task<IActionResult> Details(string? name,
+                                                [FromServices] IDepartmentRepository departmentRepository)
         {
-            if (name == null || _context.Departments == null)
+            if (name == null)
             {
                 return NotFound();
             }
 
-            var department = await _context.Departments
-                .FirstOrDefaultAsync(m => m.Name == name);
+            var department = await departmentRepository.FindOneByNameAsync(name);
+
             if (department == null)
             {
                 return NotFound();
@@ -67,43 +53,38 @@ namespace MVC.Controllers
             return View();
         }
 
-        // POST: Departments/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Name")] Department department)
+        public async Task<IActionResult> Create([Bind("Name")] Department department,
+                                                [FromServices] IDepartmentRepository departmentRepository)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(department);
-                await _context.SaveChangesAsync();
+                await departmentRepository.AddAsync(department);
 
                 return RedirectToAction(nameof(Index));
             }
+
             return View(department);
         }
 
         [HttpGet("{name?}")]
-        public async Task<IActionResult> Edit(string? name)
+        public async Task<IActionResult> Edit(string? name,
+                                             [FromServices] IDepartmentRepository departmentRepository)
         {
-            if (name == null || _context.Departments == null)
+            if (name == null)
             {
                 return NotFound();
             }
 
-            var department = await _context.Departments
-                .Where(d => d.Name == name)
-                .Include("Subdepartments")
-                .SingleOrDefaultAsync();
+            var department = await departmentRepository.FindOneByNameAsync(name);
 
             if (department == null)
             {
                 return NotFound();
             }
 
-            List<string> allDepartments = await (from d in _context.Departments
-                                                 select d.Name).ToListAsync();
+            List<string> allDepartments = await departmentRepository.FindAllDepartmentNamesAsync();
 
             DepartmentViewModel viewModel = new(department, ref allDepartments);
 
@@ -112,7 +93,9 @@ namespace MVC.Controllers
 
         [HttpPost("{name}"), ActionName("Edit")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(string name, [FromForm] DepartmentViewModel viewModel)
+        public async Task<IActionResult> Edit(string name,
+                                             [FromForm] DepartmentViewModel viewModel,
+                                             [FromServices] IDepartmentRepository departmentRepository)
         {
             if (ModelState.IsValid)
             {
@@ -125,34 +108,31 @@ namespace MVC.Controllers
                         // Department.Name is PK; can not modify PK;
                         // should create new record, move references, remove old record
                         departmentForUpdate = new(viewModel.Department.Name);
-                        _context.Entry(departmentForUpdate).State = EntityState.Added;
+                        departmentRepository.SetEntryStateAdded(departmentForUpdate);
 
-                        await _context.SaveChangesAsync();
+                        await departmentRepository.SaveChangesAsync();
 
-                        Department departmentForDelete = await _context.Departments
-                            .SingleAsync(m => m.Name == name);
-                        _context.Entry(departmentForDelete).State = EntityState.Deleted;
+                        Department departmentForDelete =
+                            await departmentRepository.FindSingleByNameNoIncludeAsync(name);
+                        departmentRepository.SetEntryStateDeleted(departmentForDelete);
                     }
                     else
                     {
                         // Department.Name has not been changed;
                         // regular update
-                        departmentForUpdate = await _context.Departments
-                            .Include("Subdepartments")
-                            .SingleAsync(m => m.Name == name);
+                        departmentForUpdate = await departmentRepository.FindSingleByNameWithIncludeAsync(name);
                     }
                     
-                    var subdepartments = _context.Departments
-                        .Where(d => viewModel.ConnectedSubdepartmentsNames.Any(inc => inc == d.Name));
+                    var subdepartments = departmentRepository
+                        .FindAllWithMatchingNames(viewModel.ConnectedSubdepartmentsNames);
 
                     departmentForUpdate.Subdepartments = subdepartments.ToList();
 
-                    _context.Update(departmentForUpdate);
-                    await _context.SaveChangesAsync();
+                    await departmentRepository.UpdateAsync(departmentForUpdate);
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!DepartmentExists(viewModel.Department.Name))
+                    if (!departmentRepository.DepartmentExists(viewModel.Department.Name))
                     {
                         return NotFound();
                     }
@@ -167,15 +147,16 @@ namespace MVC.Controllers
         }
 
         [HttpGet("{name?}")]
-        public async Task<IActionResult> Delete(string? name)
+        public async Task<IActionResult> Delete(string? name,
+                                               [FromServices] IDepartmentRepository departmentRepository)
         {
-            if (name == null || _context.Departments == null)
+            if (name == null)
             {
                 return NotFound();
             }
 
-            var department = await _context.Departments
-                .FirstOrDefaultAsync(m => m.Name == name);
+            var department = departmentRepository.FindFirstOrDefaultByNameAsync(name);
+
             if (department == null)
             {
                 return NotFound();
@@ -186,50 +167,34 @@ namespace MVC.Controllers
 
         [HttpPost("{name}"), ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(string name)
+        public async Task<IActionResult> DeleteConfirmed(string name,
+                                         [FromServices] IDepartmentRepository departmentRepository)
         {
-            if (_context.Departments == null)
-            {
-                return Problem("Entity set 'ApplicationDbContext.Departments'  is null.");
-            }
-
-            var department = await _context.Departments
-                .Where(d => d.Name == name)
-                .Include("Subdepartments") // to update set null on DepartmentMain
-                .SingleOrDefaultAsync();
+            // include Subdepartments to update set null DepartmentMain
+            var department = await departmentRepository.FindOneByNameAsync(name);
 
             if (department != null)
             {
-                _context.Departments.Remove(department);
+                await departmentRepository.RemoveAsync(department);
             }
-            
-            await _context.SaveChangesAsync();
+
             return RedirectToAction(nameof(Index));
         }
 
         [HttpGet]
-        public async Task<IActionResult> Monitoring()
+        public async Task<IActionResult> Monitoring([FromServices] IDepartmentRepository departmentRepository)
         {
-            return _context.Departments != null ?
-                          View(await _context.Departments.Include("Subdepartments").ToListAsync()) :
-                          Problem("Entity set 'ApplicationDbContext.Departments'  is null.");
+            return View(await departmentRepository.FindAllAsNoTrackingIncludeAsync());
         }
 
         [HttpGet]
         public async Task<IActionResult> Sync([FromServices] ISyncFromFile syncFromFile)
         {
-            await _context.DisposeAsync();
-
             await syncFromFile.Sync();
 
             Thread.Sleep(2000);
 
             return RedirectToAction(nameof(Monitoring));
-        }
-
-        private bool DepartmentExists(string name)
-        {
-          return (_context.Departments?.Any(e => e.Name == name)).GetValueOrDefault();
         }
     }
 }

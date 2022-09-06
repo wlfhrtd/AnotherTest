@@ -1,18 +1,8 @@
 ﻿using Dal.EfStructures;
 using DAL.EfStructures;
 using Domain.Models;
-using Microsoft.AspNetCore.Html;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
-using System.Collections;
-using System.Runtime.Intrinsics.Arm;
-using System.Text;
-using System.Text.Encodings.Web;
-using System.Xml.Linq;
-using static System.Net.Mime.MediaTypeNames;
-
 
 namespace MVC.Services
 {
