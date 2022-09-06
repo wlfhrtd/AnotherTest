@@ -92,5 +92,12 @@ namespace DAL.Repositories
         {
             return (Context.Departments?.Any(e => e.Name == name)).GetValueOrDefault();
         }
+
+        public IEnumerable<Department> FindAllMatchingSubdepartments(Department department)
+        {
+            return Table
+                .AsEnumerable()
+                .Where(d => department.Subdepartments.Any(include => include.Name == d.Name));
+        }
     }
 }

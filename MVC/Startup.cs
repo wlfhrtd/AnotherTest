@@ -2,6 +2,7 @@
 using DAL.Repositories;
 using DAL.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using MVC.Services;
 using System;
@@ -32,6 +33,7 @@ namespace MVC
 
             services.AddScoped<IDepartmentRepository, DepartmentRepository>();
 
+            services.AddScoped<IFileManager, FileManager>();
             services.AddScoped<ISyncFromFile, SyncFromFile>();
         }
 

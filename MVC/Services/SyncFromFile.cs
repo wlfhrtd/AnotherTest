@@ -1,6 +1,8 @@
 ﻿using Dal.EfStructures;
 using DAL.EfStructures;
+using DAL.Repositories.Interfaces;
 using Domain.Models;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 
@@ -8,17 +10,16 @@ namespace MVC.Services
 {
     public class SyncFromFile : ISyncFromFile
     {
-        private string projectMVCRootPath;
         private string filePath;
-        private ApplicationDbContext applicationDbContext;
+        private IDepartmentRepository departmentRepository;
 
-        public SyncFromFile()//[FromServices] ApplicationDbContext applicationDbContext)
+        public SyncFromFile([FromServices] IDepartmentRepository departmentRepository,
+                            [FromServices] IFileManager fileManager)
         {
-            //this.applicationDbContext = applicationDbContext;
-            applicationDbContext = new ApplicationDbContextFactory().CreateDbContext(new string[0]);
-            projectMVCRootPath = Directory.GetCurrentDirectory();
-            filePath = projectMVCRootPath + Path.DirectorySeparatorChar + "departments.json";
+            this.departmentRepository = departmentRepository;
+            filePath = fileManager.FilePath;
         }
+
 
         public async Task<int> Sync()
         {
@@ -28,8 +29,7 @@ namespace MVC.Services
 
             await Process(departmentsFromFile); // returned string is not used
 
-            int saveChangesResult = await applicationDbContext.SaveChangesAsync();
-            await applicationDbContext.DisposeAsync();
+            int saveChangesResult = await departmentRepository.SaveChangesAsync();
 
             return saveChangesResult;
         }
@@ -47,7 +47,7 @@ namespace MVC.Services
             // track Inserts
             for (int i = 0; i < departmentsForInsert.Count; i++)
             {
-                await applicationDbContext.AddAsync(departmentsForInsert[i]);
+                await departmentRepository.AddAsync(departmentsForInsert[i], false);
             }
             // track Updates
             foreach (var item in departmentsForUpdate)
@@ -58,20 +58,17 @@ namespace MVC.Services
             return $"Entities Inserted: {departmentsForInsert.Count}\n" +
                    $"Entities Updated: {departmentsForUpdate.Count}";
         }
-        // TODO move this method to DepartmentRepository
+
         private async Task<string> UpdateWithCollections(Department departmentForUpdate)
         {
-            Department departmentOriginal = await applicationDbContext.Departments
-                            .Include("Subdepartments")
-                            .SingleAsync(orig => orig.Name == departmentForUpdate.Name);
+            Department departmentOriginal = await departmentRepository
+                .FindSingleByNameWithIncludeAsync(departmentForUpdate.Name);
 
-            var subdepartments = applicationDbContext.Departments
-                    .AsEnumerable()
-                    .Where(d => departmentForUpdate.Subdepartments.Any(include => include.Name == d.Name));
+            var subdepartments = departmentRepository.FindAllMatchingSubdepartments(departmentForUpdate);
 
             departmentOriginal.Subdepartments = subdepartments.ToList();
 
-            applicationDbContext.Update(departmentOriginal);
+            departmentRepository.Update(departmentOriginal, false);
 
             return $"Collection update diff count:" +
                    $" {departmentForUpdate.Subdepartments.Count - departmentOriginal.Subdepartments.Count}";
@@ -88,7 +85,7 @@ namespace MVC.Services
             {
                 Department current = departmentsStack.Pop();
 
-                if (DepartmentExists(current.Name))
+                if (departmentRepository.DepartmentExists(current.Name))
                 {
                     departmentsForUpdate.Add(current);
                 }
@@ -106,10 +103,5 @@ namespace MVC.Services
                 }
             }
         }
-        // TODO move this method to DepartmentRepository
-        private bool DepartmentExists(string name)
-        {
-            return (applicationDbContext.Departments?.Any(e => e.Name == name)).GetValueOrDefault();
-        } 
     }
 }

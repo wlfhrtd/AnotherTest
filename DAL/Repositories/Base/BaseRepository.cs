@@ -39,7 +39,7 @@ namespace DAL.Repositories.Base
 
         public virtual async Task<int> AddAsync(T entity, bool persist = true)
         {
-            Table.Add(entity);
+            await Table.AddAsync(entity);
 
             return persist ? await SaveChangesAsync() : 0;
         }

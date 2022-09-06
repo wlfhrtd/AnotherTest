@@ -17,6 +17,7 @@ namespace DAL.Repositories.Interfaces
         Task<Department> FindSingleByNameNoIncludeAsync(string name);
         Task<Department> FindSingleByNameWithIncludeAsync(string name);
         IQueryable<Department>? FindAllWithMatchingNames(IList<string> departmentsNames);
+        IEnumerable<Department> FindAllMatchingSubdepartments(Department department);
         Task<Department?> FindFirstOrDefaultByNameAsync(string name);
         bool DepartmentExists(string name);
     }
