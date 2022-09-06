@@ -73,6 +73,7 @@ namespace MVC.Components.TagHelpers
             spanName.InnerHtml.Append(department.Name);
 
             li.InnerHtml.AppendHtml(spanName);
+            li.InnerHtml.AppendHtml("&nbsp;");
 
             TagBuilder spanStatus = new("span");
             spanStatus.Attributes.Add("id", department.Name + "Status");
