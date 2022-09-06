@@ -1,0 +1,29 @@
+[
+  {
+    "Name": "Hardware",
+    "Subdepartments": [
+      {
+        "Name": "Storage",
+        "Subdepartments": [
+          {
+            "Name": "Adapters",
+            "Subdepartments": [
+              {
+                "Name": "Network",
+                "Subdepartments": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "Name": "Drivers",
+        "Subdepartments": []
+      }
+    ]
+  },
+  {
+    "Name": "Test",
+    "Subdepartments": []
+  }
+]

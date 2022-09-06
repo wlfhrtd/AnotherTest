@@ -11,6 +11,7 @@ using DAL.Repositories.Interfaces;
 using MVC.ViewModels;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Http;
+using MVC.Services;
 
 namespace MVC.Controllers
 {
@@ -109,41 +110,44 @@ namespace MVC.Controllers
             return View(viewModel);
         }
 
-        [HttpPost("{name}")]
+        [HttpPost("{name}"), ActionName("Edit")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(string name, [FromForm] DepartmentViewModel viewModel)
         {
-            if (name != viewModel.Department.Name)
-            {
-                return NotFound();
-            }
-
-            //if (!ModelState.IsValid)
-            //{
-            //    List<ModelError> errors = ModelState.Values.SelectMany(v => v.Errors).ToList();
-            //    foreach (var error in errors)
-            //    {
-            //        Console.WriteLine(error.ErrorMessage);
-            //    }
-            //}
-
             if (ModelState.IsValid)
             {
                 try
                 {
-                    var department = await _context.Departments
-                        .Include("Subdepartments")
-                        .SingleAsync(m => m.Name == name);
+                    Department departmentForUpdate;
 
-                    department.Name = viewModel.Department.Name;
+                    if (name != viewModel.Department.Name)
+                    {
+                        // Department.Name is PK; can not modify PK;
+                        // should create new record, move references, remove old record
+                        departmentForUpdate = new(viewModel.Department.Name);
+                        _context.Entry(departmentForUpdate).State = EntityState.Added;
 
-                    var subdepartments = _context.Departments
-                        .Where(d => viewModel.ConnectedSubdepartmentsNames
-                        .Any(inc => inc == d.Name));
+                        await _context.SaveChangesAsync();
 
-                    department.Subdepartments = subdepartments.ToList();
+                        Department departmentForDelete = await _context.Departments
+                            .SingleAsync(m => m.Name == name);
+                        _context.Entry(departmentForDelete).State = EntityState.Deleted;
+                    }
+                    else
+                    {
+                        // Department.Name has not been changed;
+                        // regular update
+                        departmentForUpdate = await _context.Departments
+                            .Include("Subdepartments")
+                            .SingleAsync(m => m.Name == name);
+                    }
                     
-                    _context.Update(department);
+                    var subdepartments = _context.Departments
+                        .Where(d => viewModel.ConnectedSubdepartmentsNames.Any(inc => inc == d.Name));
+
+                    departmentForUpdate.Subdepartments = subdepartments.ToList();
+
+                    _context.Update(departmentForUpdate);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
@@ -180,7 +184,7 @@ namespace MVC.Controllers
             return View(department);
         }
 
-        [HttpPost("{name}")]
+        [HttpPost("{name}"), ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(string name)
         {
@@ -188,7 +192,12 @@ namespace MVC.Controllers
             {
                 return Problem("Entity set 'ApplicationDbContext.Departments'  is null.");
             }
-            var department = await _context.Departments.FindAsync(name);
+
+            var department = await _context.Departments
+                .Where(d => d.Name == name)
+                .Include("Subdepartments") // to update set null on DepartmentMain
+                .SingleOrDefaultAsync();
+
             if (department != null)
             {
                 _context.Departments.Remove(department);
@@ -204,6 +213,18 @@ namespace MVC.Controllers
             return _context.Departments != null ?
                           View(await _context.Departments.Include("Subdepartments").ToListAsync()) :
                           Problem("Entity set 'ApplicationDbContext.Departments'  is null.");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Sync([FromServices] ISyncFromFile syncFromFile)
+        {
+            await _context.DisposeAsync();
+
+            await syncFromFile.Sync();
+
+            Thread.Sleep(2000);
+
+            return RedirectToAction(nameof(Monitoring));
         }
 
         private bool DepartmentExists(string name)

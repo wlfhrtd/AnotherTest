@@ -36,5 +36,9 @@ body {
         margin: 0 5px 5px 5px;
         padding: 5px;
         font-size: 1.2em;
-        width: 120px;
+        width: 120px;       
+    }
+
+    #sortable2 li {
+        display: inline;
     }

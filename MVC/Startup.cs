@@ -3,6 +3,7 @@ using DAL.Repositories;
 using DAL.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
+using MVC.Services;
 using System;
 
 namespace MVC
@@ -23,10 +24,15 @@ namespace MVC
 
             string connectionString = Configuration.GetConnectionString("DefaultConnection");
             services.AddDbContextPool<ApplicationDbContext>(
-                options => options.UseNpgsql(connectionString,
-                    sqlOptions => sqlOptions.EnableRetryOnFailure().CommandTimeout(60)));
+                options =>
+                {
+                    options.UseNpgsql(connectionString, sqlOptions => sqlOptions.EnableRetryOnFailure().CommandTimeout(60));
+                    options.EnableSensitiveDataLogging(true);
+                });
 
             services.AddScoped<IDepartmentRepository, DepartmentRepository>();
+
+            services.AddScoped<ISyncFromFile, SyncFromFile>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
