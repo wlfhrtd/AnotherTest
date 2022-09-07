@@ -10,7 +10,24 @@
             "Subdepartments": [
               {
                 "Name": "Network",
-                "Subdepartments": []
+                "Subdepartments": [
+                  {
+                    "Name": "LAN",
+                    "Subdepartments": []
+                  },
+                  {
+                    "Name": "WIFI",
+                    "Subdepartments": []
+                  },
+                  {
+                    "Name": "VOIP",
+                    "Subdepartments": []
+                  },
+                  {
+                    "Name": "GSM",
+                    "Subdepartments": []
+                  }
+                ]
               }
             ]
           }

@@ -49,6 +49,9 @@ namespace MVC.Services
             {
                 await departmentRepository.AddAsync(departmentsForInsert[i], false);
             }
+
+            await departmentRepository.SaveChangesAsync();
+
             // track Updates
             foreach (var item in departmentsForUpdate)
             {
