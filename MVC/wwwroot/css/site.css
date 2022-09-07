@@ -17,6 +17,16 @@ body {
   margin-bottom: 60px;
 }
 
+.departments {
+    flex-direction: column;
+    flex-wrap: wrap;
+    display: flex;
+    height: 100vh;
+}
+    .departments li {
+        flex: 1 0 25%;
+    }
+
 .li-none {
     display: none;
 }

@@ -48,7 +48,7 @@ for (let i = 0; i < count; i++) {
         DepartmentStatusReversed[$status[i].textContent.toString()]);
 }
 
-// api
+// status api
 let jsonNameStatusValuesMap = JSON.stringify(Object.fromEntries(departmentsStatusAPIMap));
 
 document.addEventListener('DOMContentLoaded', function () {

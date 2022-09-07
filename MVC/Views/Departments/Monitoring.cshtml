@@ -10,15 +10,19 @@
 <input type="text" id="searchNameInput" placeholder="Find" autocomplete="off">
 &nbsp;&nbsp;&nbsp;&nbsp;
 <a asp-action="Sync" class="btn btn-primary">Syncronize</a>
-
+<br />
+<br />
+<br />
 <ul class="departments">
     @foreach (var item in Model)
     {
         if (item.DepartmentMainName == null)
         {
             @Html.CreateCollectionViewForSingle(item)
-        }    
+        }
     }
 </ul>
 
-<script type="text/javascript" src="~/js/monitoring.js"></script>
+@section Scripts {
+    <script type="text/javascript" src="~/js/monitoring.js"></script>
+}
