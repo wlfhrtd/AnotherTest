@@ -45,13 +45,15 @@ namespace MVC.Services
                                ref departmentsForInsert, ref departmentsForUpdate);
             }
             // track Inserts
-            for (int i = 0; i < departmentsForInsert.Count; i++)
+            if (departmentsForInsert.Count != 0)
             {
-                await departmentRepository.AddAsync(departmentsForInsert[i], false);
+                for (int i = 0; i < departmentsForInsert.Count; i++)
+                {
+                    await departmentRepository.AddAsync(departmentsForInsert[i], false);
+                }
+                // extra call is required to manage relations; otherwise relations info for new entities is lost
+                await departmentRepository.SaveChangesAsync();
             }
-
-            await departmentRepository.SaveChangesAsync();
-
             // track Updates
             foreach (var item in departmentsForUpdate)
             {
