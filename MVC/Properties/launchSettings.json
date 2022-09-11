@@ -4,7 +4,7 @@
     "anonymousAuthentication": true,
     "iisExpress": {
       "applicationUrl": "http://localhost:44438",
-      "launchUrl": "Departments/Index",
+      "launchUrl": "Departments/Monitoring",
       "sslPort": 44366
     }
   },
@@ -14,7 +14,7 @@
       "dotnetRunMessages": true,
       "launchBrowser": true,
       "applicationUrl": "https://localhost:7201;http://localhost:5201",
-      "launchUrl": "Departments/Index",
+      "launchUrl": "Departments/Monitoring",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
