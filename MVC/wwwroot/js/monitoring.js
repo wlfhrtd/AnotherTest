@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log(event.data);
     };
     socket.onmessage = function (event) {
-        let object = JSON.parse(event.data);
+        let object = JSON.parse(event.data.trim());
         for (const [key, value] of Object.entries(object)) {
             deparmentsStatusUIMap.get(key).textContent = DepartmentStatus[value];
         }

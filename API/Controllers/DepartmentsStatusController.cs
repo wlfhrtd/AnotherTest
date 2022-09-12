@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Net.WebSockets;
 using System.Net;
-using System.Text.Json;
 using System.Text;
 using System;
 using System.Collections.Generic;
@@ -11,6 +10,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Net.Sockets;
 using System.Buffers;
+using Newtonsoft.Json.Serialization;
 
 namespace API.Controllers
 {
@@ -33,72 +33,42 @@ namespace API.Controllers
 
         private async Task Echo(WebSocket webSocket)
         {
-            var buffer = new byte[1024 * 4];
+            // OnOpen(); current receive/transmit json bytes array length is < 512
+            using IMemoryOwner<byte> receiveBuffer = MemoryPool<byte>.Shared.Rent(1024); // stack allocation
 
-            WebSocketReceiveResult result =
-                await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+            ValueWebSocketReceiveResult request =
+                await webSocket.ReceiveAsync(receiveBuffer.Memory, CancellationToken.None);
 
-            string bytesAsString = Encoding.UTF8.GetString(buffer);
+            var departmentsResponse = Deserialize<Dictionary<string, int>>(
+                receiveBuffer.Memory.Slice(0, request.Count).ToArray());
 
-            Dictionary<string, int> departmentsResponse =
-                JsonConvert.DeserializeObject<Dictionary<string, int>>(bytesAsString);
-
-            int iterations = 1000;
-            int counter = 0;           
-            long[] resultsMillis = new long[iterations];
-            var stopWatch = Stopwatch.StartNew();
-
-            while (!result.CloseStatus.HasValue && counter != iterations)
+            while (webSocket.State == WebSocketState.Open)
             {
                 InverseStatus(ref departmentsResponse);
 
-                // var json = JsonConvert.SerializeObject(departmentsResponse);
-                // var jsonResponse = Encoding.UTF8.GetBytes(json);
-
-                var json = System.Text.Json.JsonSerializer.Serialize(departmentsResponse);
-                var jsonResponse = Encoding.UTF8.GetBytes(json);
-
-                await webSocket.SendAsync(new ArraySegment<byte>(jsonResponse, 0, jsonResponse.Length),
-                    result.MessageType, result.EndOfMessage, CancellationToken.None);
-
-                result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-
-                resultsMillis[counter] = stopWatch.ElapsedMilliseconds;
-                counter++;
-                stopWatch.Restart();
+                await OnMessage(webSocket, receiveBuffer, request, departmentsResponse);
             }
-            // forced closure for benchmarking
-            await webSocket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
 
-            // benchmark
-            string newtonsoft = "Newtonsoft.Json";
-            string systemTextJson = "System.Text.Json";
+            await OnClose(webSocket);
+        }
 
-            StringBuilder sb = new(8192);
+        private static async Task OnMessage(WebSocket webSocket, IMemoryOwner<byte> receiveBuffer,
+                                            ValueWebSocketReceiveResult request,
+                                            Dictionary<string, int> departmentsResponse)
+        {
+            using MemoryStream memoryStream = new();
+            Serialize(departmentsResponse, memoryStream);
 
-            for (int i = 0; i < iterations; i++)
-                // sb.AppendLine($"Elapsed milliseconds with {newtonsoft}: {resultsMillis[i]}");
-                sb.AppendLine($"Elapsed milliseconds with {systemTextJson}: {resultsMillis[i]}");
+            await webSocket.SendAsync(memoryStream.ToArray(), request.MessageType,
+                                      request.EndOfMessage, CancellationToken.None);
 
-            sb.AppendLine(Environment.NewLine + "******** STATS ********");
-            sb.AppendLine($"AVG: {resultsMillis.Average()}");
-            sb.AppendLine($"MIN: {resultsMillis.Min()}");
-            sb.AppendLine($"MAX: {resultsMillis.Max()}");
-            sb.AppendLine($"SUM (in seconds): {resultsMillis.Sum() / 1000L}");
+            await webSocket.ReceiveAsync(receiveBuffer.Memory, CancellationToken.None);
+        }
 
-            string folder = "BenchmarksResults";
-            Directory.CreateDirectory(folder);
-
-            // string filename = "Newtonsoft.Json_results.txt";
-            string filename = "System.Text.Json_results.txt";
-            string filepath = folder + Path.DirectorySeparatorChar + filename;
-
-            using StreamWriter streamWriter = new(filepath);
-            await streamWriter.WriteLineAsync(sb.ToString());
-
-            // normal procedure code
-            //await webSocket.CloseAsync(
-            //    result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
+        private static async Task OnClose(WebSocket webSocket)
+        {
+            await webSocket.CloseAsync(
+                            webSocket.CloseStatus.Value, webSocket.CloseStatusDescription, CancellationToken.None);
         }
 
         private static void InverseStatus(ref Dictionary<string, int> departmentsResponse)
@@ -109,6 +79,99 @@ namespace API.Controllers
                 departmentsResponse[key] = 1 - departmentsResponse[key];
             }
         }
+
+        private static void Serialize<T>(T obj, Stream stream)
+        {
+            // true => leave open for underlying stream (MemoryStream in this case) when disposing StreamWriter
+            using (StreamWriter streamWriter = new(stream, Encoding.UTF8, 1024, true)) 
+            using (JsonTextWriter jsonWriter = new(streamWriter))
+            {
+                var serializer = new JsonSerializer();
+                // serializer.Formatting = Formatting.Indented;
+                serializer.Serialize(jsonWriter, obj);
+            }
+        }
+
+        private static T Deserialize<T>(byte[] data) where T : class
+        {
+            using (MemoryStream memoryStream = new(data))
+            using (StreamReader streamReader = new(memoryStream, Encoding.UTF8))
+
+                return JsonSerializer.Create().Deserialize(streamReader, typeof(T)) as T;
+        }
+
+        #region with benchmark; lazy to refactor
+        //private async Task Echo(WebSocket webSocket)
+        //{
+        //    var buffer = new byte[1024 * 4];
+
+        //    WebSocketReceiveResult result =
+        //        await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+
+        //    string bytesAsString = Encoding.UTF8.GetString(buffer);
+
+        //    Dictionary<string, int> departmentsResponse =
+        //        JsonConvert.DeserializeObject<Dictionary<string, int>>(bytesAsString);
+
+        //    int iterations = 1000;
+        //    int counter = 0;           
+        //    long[] resultsMillis = new long[iterations];
+        //    var stopWatch = Stopwatch.StartNew();
+
+        //    while (!result.CloseStatus.HasValue && counter != iterations)
+        //    {
+        //        InverseStatus(ref departmentsResponse);
+
+        //        var json = JsonConvert.SerializeObject(departmentsResponse);
+        //        var jsonResponse = Encoding.UTF8.GetBytes(json);
+
+        //        //var json = System.Text.Json.JsonSerializer.Serialize(departmentsResponse);
+        //        //var jsonResponse = Encoding.UTF8.GetBytes(json);
+
+        //        await webSocket.SendAsync(new ArraySegment<byte>(jsonResponse, 0, jsonResponse.Length),
+        //            result.MessageType, result.EndOfMessage, CancellationToken.None);
+
+        //        result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+
+        //        resultsMillis[counter] = stopWatch.ElapsedMilliseconds;
+        //        counter++;
+        //        stopWatch.Restart();
+        //    }
+        //    // forced closure for benchmarking
+        //    await webSocket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
+
+        //    // benchmark
+        //    string newtonsoft = "Newtonsoft.Json";
+        //    string systemTextJson = "System.Text.Json";
+
+        //    StringBuilder sb = new(8192);
+
+        //    for (int i = 0; i < iterations; i++)
+        //        // sb.AppendLine($"Elapsed milliseconds with {newtonsoft}: {resultsMillis[i]}");
+        //        sb.AppendLine($"Elapsed milliseconds with {newtonsoft}: {resultsMillis[i]}");
+
+        //    sb.AppendLine(Environment.NewLine + "******** STATS ********");
+        //    sb.AppendLine($"AVG: {resultsMillis.Average()}");
+        //    sb.AppendLine($"MIN: {resultsMillis.Min()}");
+        //    sb.AppendLine($"MAX: {resultsMillis.Max()}");
+        //    sb.AppendLine($"SUM (in seconds): {resultsMillis.Sum() / 1000L}");
+
+        //    string folder = "BenchmarksResults";
+        //    Directory.CreateDirectory(folder);
+
+        //    // string filename = "Newtonsoft.Json_results.txt";
+        //    string filename = "Newtonsoft.Json_results_2.txt";
+        //    string filepath = folder + Path.DirectorySeparatorChar + filename;
+
+        //    //using StreamWriter streamWriter = new(filepath);
+        //    //await streamWriter.WriteLineAsync(sb.ToString());
+
+        //    // normal procedure code
+        //    //await webSocket.CloseAsync(
+        //    //    result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
+        //}
+        #endregion
+
 
         #region new
         //private async Task Echo(WebSocket webSocket)

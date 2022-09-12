@@ -42,6 +42,8 @@ namespace Domain.Models
         [JsonIgnore]
         [IgnoreDataMember]
         public virtual Department? DepartmentMain { get; set; }
+        [JsonIgnore]
+        [IgnoreDataMember]
         public virtual ICollection<Department>? Subdepartments { get; set; }
     }
 
